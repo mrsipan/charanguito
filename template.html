@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charango Chords Pro</title>
+<script type="importmap">
+  { "imports": { "squint-cljs/": "https://unpkg.com/squint-cljs/", "reagami": "https://unpkg.com/reagami@0.1.37/reagami.mjs" } }
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+<style>
+  :root { --bulma-body-size: 14px; }
+  body { background: #f5f5f5; }
+  #app { max-width: 1200px; margin: 0 auto; min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="text/plain" id="squint-src">
+</script>
+<script type="module">
+import { compileString } from 'https://unpkg.com/squint-cljs/index.js';
+const source = document.getElementById('squint-src').textContent;
+try {
+  const js = compileString(source, { core_module: 'squint-cljs/core.js' });
+  const blob = new Blob([js], { type: 'application/javascript' });
+  await import(URL.createObjectURL(blob));
+} catch (err) {
+  document.getElementById('app').innerHTML = '<div style="padding:2rem;color:red"><h2>Compilation Error</h2><pre>'+err.message+'</pre></div>';
+}
+</script>
+</body>
+</html>
