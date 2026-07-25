@@ -1045,11 +1045,7 @@
       [:a {:class "navbar-item" :style "padding:0.25rem 0.75rem;"
            :onclick (fn [_] (swap! app-state assoc :active-tab "chords"))}
        [:img {:src "charanguito.jpg" :alt "Charanguito"
-              :style "height:42px;width:auto;border-radius:6px;margin-right:10px;"}]
-       [:div
-        [:span {:class "has-text-weight-bold is-size-5"} (tr :app-title)]
-        [:br]
-        [:span {:class "is-size-7 has-text-grey"} (tr :app-subtitle)]]]
+              :style "height:42px;width:auto;border-radius:6px;"}]]
       [:a {:class "navbar-burger" :role "button" :aria-label "menu" :aria-expanded "false"
            :onclick (fn [e]
                       (let [target (.querySelector js/document ".navbar-menu")
