@@ -1018,7 +1018,7 @@
            (mapv (fn [k] (chord-card k (get chords-db k) state)) filtered))
      (when (zero? (count filtered))
        [:div {:class "has-text-centered has-text-grey py-6"}
-        [:p {:class "is-size-4"} "🦙"]
+        [:p {:class "is-size-4"} [:img {:src "charanguito.jpg" :style "height:48px;border-radius:6px;"}]]
         [:p (tr :no-chords)]])]))
 
 (defn progressions-view [state]
@@ -1095,11 +1095,14 @@
         dark (get state :dark-theme)]
     [:nav {:class (str "navbar " (if dark "is-dark" "is-light")) :role "navigation"}
      [:div {:class "navbar-brand"}
-      [:a {:class "navbar-item"
+      [:a {:class "navbar-item" :style "padding:0.25rem 0.75rem;"
            :onclick (fn [_] (swap! app-state assoc :active-tab "chords"))}
-       [:span {:class "is-size-4 mr-2"} "🦙"]
-       [:span {:class "has-text-weight-bold is-size-5"} (tr :app-title)]
-       [:span {:class "is-size-7 has-text-grey ml-2"} (tr :app-subtitle)]]
+       [:img {:src "charanguito.jpg" :alt "Charanguito"
+              :style "height:42px;width:auto;border-radius:6px;margin-right:10px;"}]
+       [:div
+        [:span {:class "has-text-weight-bold is-size-5"} (tr :app-title)]
+        [:br]
+        [:span {:class "is-size-7 has-text-grey"} (tr :app-subtitle)]]]
       [:a {:class "navbar-burger" :role "button" :aria-label "menu" :aria-expanded "false"
            :onclick (fn [e]
                       (let [target (.querySelector js/document ".navbar-menu")
