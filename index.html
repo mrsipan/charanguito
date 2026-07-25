@@ -3,21 +3,55 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Charango Chords Pro</title>
-<script type="importmap">
-  { "imports": { "squint-cljs/": "https://unpkg.com/squint-cljs/", "reagami": "https://unpkg.com/reagami@0.1.37/reagami.mjs" } }
-</script>
+<title>Charanguito — Chords & Tuner</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<script type="importmap">
+  { "imports": { "squint-cljs/": "https://unpkg.com/squint-cljs/" } }
+</script>
 <style>
   :root { --bulma-body-size: 14px; }
-  body { background: #f5f5f5; }
-  #app { max-width: 1200px; margin: 0 auto; min-height: 100vh; }
+  body { height: 100vh; overflow: hidden; background: #f5f5f5; font-family: JuliaMono, monospace; }
+  #app { max-width: 860px; margin: 0 auto; background: #faf9f6; box-shadow: 0 0 40px rgba(0,0,0,0.08); }
+  @font-face { font-family: 'JuliaMono'; src: url('https://cdn.jsdelivr.net/gh/cormullion/juliamono/webfonts/JuliaMono-Light.woff2') format('woff2'); font-weight: 300; font-style: normal; }
+  @font-face { font-family: 'JuliaMono'; src: url('https://cdn.jsdelivr.net/gh/cormullion/juliamono/webfonts/JuliaMono-LightItalic.woff2') format('woff2'); font-weight: 300; font-style: italic; }
+  @font-face { font-family: 'JuliaMono'; src: url('https://cdn.jsdelivr.net/gh/cormullion/juliamono/webfonts/JuliaMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+  @font-face { font-family: 'JuliaMono'; src: url('https://cdn.jsdelivr.net/gh/cormullion/juliamono/webfonts/JuliaMono-RegularItalic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+  @font-face { font-family: 'JuliaMono'; src: url('https://cdn.jsdelivr.net/gh/cormullion/juliamono/webfonts/JuliaMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; }
+  @font-face { font-family: 'JuliaMono'; src: url('https://cdn.jsdelivr.net/gh/cormullion/juliamono/webfonts/JuliaMono-BoldItalic.woff2') format('woff2'); font-weight: 700; font-style: italic; }
+  .node-row { display: flex; align-items: center; cursor: pointer; padding: 3px 12px; border-left: 3px solid transparent; min-height: 30px; }
+  .node-row:hover { background: rgba(0,0,0,0.03); }
+  .node-row.focused { background: rgba(26,111,196,0.06); border-left-color: #1a6fc4; }
+  .bullet { width: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 12px; user-select: none; }
+  .bullet.expanded::before { content: '\25BE'; color: #666; }
+  .bullet.collapsed::before { content: '\25B8'; color: #999; }
+  .bullet.leaf::before { content: '\2022'; color: #bbb; }
+  .bullet.completed::before { content: '\2713'; color: #4caf50; }
+  .text-node { flex: 1; outline: none; white-space: pre-wrap; word-break: break-word; padding: 2px 6px; border-radius: 3px; line-height: 1.5; }
+  .text-node.completed { text-decoration: line-through; color: #aaa; }
+  .text-node[contenteditable="true"] { background: rgba(26,111,196,0.04); cursor: text; border-radius: 4px; caret-color: #A0522D; }
+  .cursor-block { background: #ffb6c1; color: #fff; font-weight: 600; border-radius: 2px; }
+  .text-node b { font-weight: 700; color: #111; }
+  .text-node i { font-style: italic; }
+  .text-node u { text-decoration: underline; }
+  .text-node s { text-decoration: line-through; opacity: 0.6; }
+  .text-node code { background: rgba(0,0,0,0.06); padding: 2px 4px; border-radius: 3px; font-family: SF Mono,Consolas,monospace; font-size: 13px; color: #d32f2f; }
+  .text-node .verbatim { background: rgba(0,0,0,0.06); padding: 2px 4px; border-radius: 3px; font-family: SF Mono,Consolas,monospace; font-size: 13px; color: #1976d2; }
+  .text-node a { color: #1a6fc4; text-decoration: none; border-bottom: 1px solid #1a6fc4; }
+  .text-node a:hover { background: #e3f0ff; }
+  .help-section-title { font-weight: 600; margin: 12px 0 4px; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .help-table { width: 100%; }
+  .help-table td { padding: 2px 8px; }
+  .help-table kbd { background: #f5f3ef; border: 1px solid #d5d0c8; padding: 2px 6px; border-radius: 4px; font-family: SF Mono,Consolas,monospace; font-size: 11px; }
+  .tree-container { flex: 1; overflow-y: auto; padding: 16px 0; }
 </style>
 </head>
 <body>
 <div id="app"></div>
+
 <script type="text/plain" id="squint-src">
-;; Charango Chords Pro — Andean String Instrument Library
+;; Charanguito — Charango Chords & Tuner
 ;; squint cljs + reagami + bulma
 ;; Charango: 10 strings in 5 courses (pairs), tuned E-A-E-C-G (high to low, re-entrant)
 ;; The 3rd course (middle E) traditionally has octave separation: E4 + E3 for richer tone.
@@ -30,6 +64,124 @@
 (set! (.. js/document -body -style -overflow) "auto")
 (when-let [app-el (js/document.getElementById "app")]
   (set! (.-overflow (.-style app-el)) "auto"))
+
+;; ── Translations (i18n) ───────────────────────────────────────────
+(def translations
+  {:en {:app-title "Charanguito"
+        :app-subtitle "Chords & Tuner"
+        :tab-chords "Chords"
+        :tab-progressions "Progressions"
+        :tab-favorites "Favorites"
+        :search-placeholder "Search chords..."
+        :filter-all-roots "All Roots"
+        :filter-all-types "All Types"
+        :filter-all-levels "All Levels"
+        :chords-found "chord(s) found"
+        :no-chords "No charango chords match your search"
+        :no-favorites "No favorites yet"
+        :no-favorites-hint "Click the star on any chord to add it here."
+        :play "Play"
+        :play-progression "Play"
+        :strum-chord "Strum Chord"
+        :close "Close"
+        :root "Root"
+        :type "Type"
+        :intervals "Intervals"
+        :difficulty "Difficulty"
+        :course "Course"
+        :fret "Fret"
+        :finger "Finger"
+        :muted "Muted"
+        :open-str "Open"
+        :transpose "Transpose"
+        :reset "Reset"
+        :volume "Volume"
+        :octave "Octave"
+        :unison "Unison"
+        :light "Light"
+        :dark "Dark"
+        :favorites-count "Favorites"
+        :note "Note"
+        :footer "chords"
+        :footer-progressions "progressions"
+        :footer-built "Built with Squint + Reagami + Bulma"
+        :tab-tuner "Tuner"
+        :tuner-start "Start Tuner"
+        :tuner-stop "Stop Tuner"
+        :tuner-play-ref "Play Ref"
+        :tuner-need-mic "Microphone access is needed for the tuner."
+        :tuner-mic-denied "Microphone access denied. Please allow mic access to use the tuner."
+        :tuner-listening "Listening..."
+        :tuner-course "Course"
+        :tuner-target "Target"
+        :tuner-cents "Cents"}
+   :es {:app-title "Charanguito"
+        :app-subtitle "Acordes y Afinador"
+        :tab-chords "Acordes"
+        :tab-progressions "Progresiones"
+        :tab-favorites "Favoritos"
+        :search-placeholder "Buscar acordes..."
+        :filter-all-roots "Todas las Raíces"
+        :filter-all-types "Todos los Tipos"
+        :filter-all-levels "Todos los Niveles"
+        :chords-found "acorde(s) encontrado(s)"
+        :no-chords "No hay acordes de charango con esos filtros"
+        :no-favorites "Sin favoritos aún"
+        :no-favorites-hint "Haz clic en la estrella para agregar acordes."
+        :play "Tocar"
+        :play-progression "Tocar"
+        :strum-chord "Rasguear Acorde"
+        :close "Cerrar"
+        :root "Raíz"
+        :type "Tipo"
+        :intervals "Intervalos"
+        :difficulty "Dificultad"
+        :course "Orden"
+        :fret "Traste"
+        :finger "Dedo"
+        :muted "Apagado"
+        :open-str "Abierto"
+        :transpose "Transportar"
+        :reset "Restablecer"
+        :volume "Volumen"
+        :octave "Octava"
+        :unison "Unísono"
+        :light "Claro"
+        :dark "Oscuro"
+        :favorites-count "Favoritos"
+        :note "Nota"
+        :footer "acordes de charango"
+        :footer-progressions "progresiones"
+        :footer-built "Hecho con Squint + Reagami + Bulma"
+        :tab-tuner "Afinador"
+        :tuner-start "Iniciar Afinador"
+        :tuner-stop "Detener Afinador"
+        :tuner-play-ref "Tocar Ref"
+        :tuner-need-mic "Se necesita acceso al micrófono para el afinador."
+        :tuner-mic-denied "Acceso al micrófono denegado. Permita el acceso para usar el afinador."
+        :tuner-listening "Escuchando..."
+        :tuner-course "Orden"
+        :tuner-target "Objetivo"
+        :tuner-cents "Cents"
+        :note-names ["Do" "Do#" "Re" "Re#" "Mi" "Fa" "Fa#" "Sol" "Sol#" "La" "La#" "Si"]}
+   :en-note-names ["C" "C#" "D" "D#" "E" "F" "F#" "G" "G#" "A" "A#" "B"]
+   :es-note-names ["Do" "Do#" "Re" "Re#" "Mi" "Fa" "Fa#" "Sol" "Sol#" "La" "La#" "Si"]})
+
+(defn tr [key] (get (get translations (get @app-state :lang :en)) key))
+
+(defn note-display [note]
+  "Translate a note name for display (C→Do in Spanish mode)."
+  (let [idx (note-index note)
+        names (get translations (if (= (get @app-state :lang :en) :es)
+                                  :es-note-names
+                                  :en-note-names))]
+    (if (>= idx 0)
+      (get names idx)
+      note)))
+
+(defn transposed-note-display [note]
+  "Display a note name translated, handling flat enharmonics."
+  (note-display note))
 
 ;; ── Constants ─────────────────────────────────────────────────────
 (def all-notes ["C" "C#" "D" "D#" "E" "F" "F#" "G" "G#" "A" "A#" "B"])
@@ -450,6 +602,7 @@
 ;; ── App State ─────────────────────────────────────────────────────
 (def app-state
   (atom {:active-tab "chords"
+         :lang :en
          :search ""
          :filter-root "All"
          :filter-type "All"
@@ -463,6 +616,167 @@
          :transpose 0
          :volume 0.5
          :octave-mode true}))  ;; true = authentic octave separation on course 3
+
+;; ── Charango Tuner ─────────────────────────────────────────────────
+(def tuner-stream (atom nil))
+(def tuner-audio-ctx (atom nil))
+(def tuner-anim-frame (atom nil))
+(def tuner-detected (atom nil))
+(def tuner-error (atom nil))
+
+(def tuner-course-display ["1st (E-E)" "2nd (A-A)" "3rd (E-e)" "4th (C-C)" "5th (G-G)"])
+(def tuner-target-notes ["E4" "A4" "E4" "C4" "G3"])
+
+(defn cents-deviation [detected target]
+  (if (and (> detected 0) (> target 0))
+    (* 1200 (/ (Math/log (/ detected target)) (Math/log 2)))
+    0))
+
+(defn autocorrelation-pitch [buffer sample-rate]
+  (let [min-lag (Math/floor (/ sample-rate 2500))
+        max-lag (Math/floor (/ sample-rate 100))
+        buf-len (.-length buffer)
+        best-lag (atom min-lag)
+        best-corr (atom -1e10)]
+    (when (> buf-len max-lag)
+      (dotimes [lag (- max-lag min-lag)]
+        (let [actual-lag (+ min-lag lag)
+              corr (atom 0.0)]
+          (dotimes [i (- buf-len actual-lag)]
+            (swap! corr + (* (aget buffer i) (aget buffer (+ i actual-lag)))))
+          (when (> @corr @best-corr)
+            (reset! best-corr @corr)
+            (reset! best-lag actual-lag)))))
+    (if (> @best-corr 0)
+      (/ sample-rate @best-lag)
+      0)))
+
+(defn closest-course [freq]
+  (let [best-idx (atom 0)
+        best-dist (atom 1e10)]
+    (dotimes [i 5]
+      (let [target (aget course-base-freqs i)
+            dist (Math/abs (- freq target))]
+        (when (< dist @best-dist)
+          (reset! best-dist dist)
+          (reset! best-idx i))))
+    @best-idx))
+
+(defn tuner-play-ref [course-idx]
+  (if-let [ctx (get-audio-ctx)]
+    (let [freq (aget course-base-freqs course-idx)
+          now (.-currentTime ctx)]
+      (play-string ctx freq now 1.5 @volume))
+    (println "Audio context not available")))
+
+(defn stop-tuner! []
+  (when-let [frame @tuner-anim-frame]
+    (.cancelAnimationFrame js/window frame)
+    (reset! tuner-anim-frame nil))
+  (when-let [stream @tuner-stream]
+    (.forEach (.getTracks stream) (fn [track] (.stop track)))
+    (reset! tuner-stream nil))
+  (when-let [ctx @tuner-audio-ctx]
+    (.close ctx)
+    (reset! tuner-audio-ctx nil))
+  (reset! tuner-detected nil))
+
+(defn tuner-loop [analyser sample-rate]
+  (let [buffer-length (.-frequencyBinCount analyser)
+        buffer (js/Float32Array. buffer-length)]
+    (.getFloatTimeDomainData analyser buffer)
+    (let [freq (autocorrelation-pitch buffer sample-rate)]
+      (when (> freq 0)
+        (let [cidx (closest-course freq)
+              target (aget course-base-freqs cidx)
+              cents (cents-deviation freq target)
+              in-tune? (and (>= cents -10) (<= cents 10))]
+          (reset! tuner-detected {:freq freq :cents cents :course-idx cidx :in-tune? in-tune?}))))
+    (reset! tuner-anim-frame
+      (.requestAnimationFrame js/window
+        (fn [] (tuner-loop analyser sample-rate))))))
+
+(defn start-tuner! []
+  (try
+    (let [constraints #js {:audio true}]
+      (-> (.getUserMedia (.-mediaDevices js/navigator) constraints)
+          (.then (fn [stream]
+                   (reset! tuner-stream stream)
+                   (let [ctx (js/AudioContext.)
+                         source (.createMediaStreamSource ctx stream)
+                         analyser (.createAnalyser ctx)]
+                     (set! (.-fftSize analyser) 4096)
+                     (.connect source analyser)
+                     (reset! tuner-audio-ctx ctx)
+                     (reset! tuner-detected nil)
+                     (tuner-loop analyser (.-sampleRate ctx)))))
+          (.catch (fn [err]
+                    (reset! tuner-error (tr :tuner-mic-denied))
+                    (println "Mic error:" (.-message err))))))
+    (catch js/Error e
+      (reset! tuner-error (tr :tuner-need-mic))
+      (println "Tuner start error:" (.-message e)))))
+
+(defn tuner-row [course-idx detected]
+  (let [target-freq (aget course-base-freqs course-idx)
+        target-note (aget tuner-target-notes course-idx)
+        course-name (aget tuner-course-display course-idx)
+        is-active (and detected (= (get detected :course-idx) course-idx))
+        cents (if is-active (get detected :cents) 0)
+        in-tune? (if is-active (get detected :in-tune?) false)
+        bar-pos (max 0 (min 100 (+ 50 (* cents 1.0))))
+        bar-color (if in-tune? "#27ae60"
+                     (if (and (>= cents -15) (<= cents 15)) "#f39c12"
+                       "#e74c3c"))]
+    [:div {:class (str "box tuner-row mb-2 " (if in-tune? "has-background-success-light" ""))
+           :key (str "tuner-" course-idx)}
+     [:div {:class "columns is-mobile is-align-items-center is-gapless"}
+      [:div {:class "column is-2"}
+       [:p {:class "has-text-weight-bold"} course-name]
+       [:p {:class "is-size-7 has-text-grey"} target-note (str " (" (.toFixed target-freq 1) " Hz)")]]
+      [:div {:class "column is-1 has-text-centered"}
+       (if is-active
+         [:span {:class "tag is-medium" :style (str "background:" bar-color ";color:white;")}
+          (if (> cents 0) "+" "") (.toFixed cents 1) "¢"]
+         [:span {:class "tag is-light"} "—"])]
+      [:div {:class "column is-7"}
+       [:div {:style "background:#eee;border-radius:4px;height:24px;position:relative;overflow:hidden;"}
+        [:div {:style (str "background:" bar-color ";height:100%;width:" bar-pos "%;transition:width 0.1s;")}]
+        [:div {:style "position:absolute;left:50%;top:0;width:2px;height:100%;background:#333;"}]]]
+      [:div {:class "column is-2 has-text-right"}
+       [:button {:class "button is-small is-info"
+                 :onclick (fn [_] (tuner-play-ref course-idx))}
+        (str "▶ " (tr :tuner-play-ref))]]]]))
+
+(defn tuner-view [state]
+  (let [detected @tuner-detected
+        running? (some? @tuner-stream)
+        error-msg @tuner-error]
+    [:div
+     [:div {:class "level mb-4"}
+      [:div {:class "level-left"}
+       [:h2 {:class "title is-4"} "🎵 " (tr :tab-tuner)]]
+      [:div {:class "level-right"}
+       (if running?
+         [:button {:class "button is-danger"
+                   :onclick (fn [_] (stop-tuner!))}
+          (tr :tuner-stop)]
+         [:button {:class "button is-success"
+                   :onclick (fn [_]
+                              (reset! tuner-error nil)
+                              (start-tuner!))}
+          (tr :tuner-start)])]]
+     (when error-msg
+       [:div {:class "notification is-warning"}
+        [:button {:class "delete" :onclick (fn [_] (reset! tuner-error nil))}]
+        error-msg])
+     (when running?
+       [:div {:class "has-text-centered mb-3"}
+        [:span {:class "tag is-info is-medium"} "🎤 " (tr :tuner-listening)]])
+     (into [:div]
+           (mapv (fn [i] (tuner-row i detected))
+                 (range 5)))]))
+
 
 ;; ── Chord Progressions ────────────────────────────────────────────
 (def progressions
@@ -577,7 +891,7 @@
        [:p {:class "control"}
         [:button {:class "button is-small is-info"
                   :onclick (fn [e] (.stopPropagation e) (play-chord chord-key))}
-         "▶ Play"]]
+         (str "▶ " (tr :play))]]
        [:p {:class "control"} (favorite-star chord-key favorites)]]]]))
 
 (defn chord-modal []
@@ -600,12 +914,12 @@
            [:div {:class "has-text-centered"}
             (render-chord-svg chord-data 200 260)]
            [:div {:class "content mt-3"}
-            [:p [:strong "Root: "] (get chord-data :root)]
-            [:p [:strong "Type: "] (get chord-data :type)]
-            [:p [:strong "Intervals: "] (str (get chord-data :intervals))]
-            [:p [:strong "Difficulty: "] (difficulty-tag (get chord-data :difficulty))]
+            [:p [:strong (str (tr :root) ": ")] (get chord-data :root)]
+            [:p [:strong (str (tr :type) ": ")] (get chord-data :type)]
+            [:p [:strong (str (tr :intervals) ": ")] (str (get chord-data :intervals))]
+            [:p [:strong (str (tr :difficulty) ": ")] (difficulty-tag (get chord-data :difficulty))]
             (into [:table {:class "table is-striped is-narrow is-fullwidth"}]
-                  (into [:thead [:tr [:th "Course"] [:th "Note"] [:th "Fret"] [:th "Finger"]]]
+                  (into [:thead [:tr [:th (tr :course)] [:th "Note"] [:th (tr :fret)] [:th (tr :finger)]]]
                         [(into [:tbody]
                                (mapv (fn [i]
                                        (let [s (get fingering i)
@@ -614,19 +928,19 @@
                                          [:tr {:key (str "fret-" i)}
                                           [:td (get course-names i)]
                                           [:td (if (>= fret 0) (fret->note-solver i fret) "-")]
-                                          [:td (if (= fret -1) [:span {:style "color:#e74c3c"} "Muted"]
-                                                   (if (= fret 0) [:span {:style "color:#27ae60"} "Open"] fret))]
+                                          [:td (if (= fret -1) [:span {:style "color:#e74c3c"} (tr :muted)]
+                                                   (if (= fret 0) [:span {:style "color:#27ae60"} (tr :open-str)] fret))]
                                           [:td (if (> finger 0) finger "-")]]))
                                      (range course-count)))]))
             [:div {:class "has-text-centered mt-3"}
              [:button {:class "button is-info is-medium"
                        :onclick (fn [_] (play-chord chord-key))}
-              "▶ Strum Chord"]]]]
+              (str "▶ " (tr :strum-chord))]]]]
           [:footer {:class "modal-card-foot"}
            (favorite-star chord-key favorites)
            [:button {:class "button"
                      :onclick (fn [_] (swap! app-state assoc :selected-chord nil))}
-            "Close"]]]]))))
+            (tr :close)]]]]))))
 
 (defn progression-card [prog transpose-amt]
   (let [tp (if (= transpose-amt 0) prog (get-transposed-progression prog transpose-amt))
@@ -663,7 +977,7 @@
        [:div {:class "level-item"}
         [:button {:class "button is-info is-small"
                   :onclick (fn [_] (play-progression chords))}
-         "▶ Play"]]]]
+         (str "▶ " (tr :play))]]]]
      [:p {:class "is-size-7 has-text-grey mb-3"} (get tp :description)]
      (into [:div {:class "is-flex is-justify-content-center is-align-items-center"
                   :style "overflow-x:auto;padding:0.5rem 0;"}]
@@ -676,7 +990,7 @@
      [:div {:class "field is-horizontal is-flex-wrap-wrap"}
       [:div {:class "field-body mr-2"}
        [:p {:class "control has-icons-left"}
-        [:input {:class "input" :type "text" :placeholder "Search chords (e.g. Am7)..."
+        [:input {:class "input" :type "text" :placeholder (tr :search-placeholder)
                  :value (get state :search)
                  :oninput (fn [e] (swap! app-state assoc :search (.. e -target -value)))}]
         [:span {:class "icon is-left"} "🎵"]]]
@@ -684,28 +998,28 @@
        [:div {:class "select"}
         (into [:select {:value (get state :filter-root)
                         :onchange (fn [e] (swap! app-state assoc :filter-root (.. e -target -value)))}
-               [:option {:value "All"} "All Roots"]]
-              (mapv (fn [n] [:option {:value n :key n} n]) all-notes))]]
+               [:option {:value "All"} (tr :filter-all-roots)]]
+              (mapv (fn [n] [:option {:value n :key n} (note-display n)]) all-notes))]]
       [:div {:class "field mr-2"}
        [:div {:class "select"}
         (into [:select {:value (get state :filter-type)
                         :onchange (fn [e] (swap! app-state assoc :filter-type (.. e -target -value)))}
-               [:option {:value "All"} "All Types"]]
+               [:option {:value "All"} (tr :filter-all-types)]]
               (mapv (fn [t] [:option {:value t :key t} t]) chord-types))]]
       [:div {:class "field"}
        [:div {:class "select"}
         (into [:select {:value (get state :filter-difficulty)
                         :onchange (fn [e] (swap! app-state assoc :filter-difficulty (.. e -target -value)))}
-               [:option {:value "All"} "All Levels"]]
+               [:option {:value "All"} (tr :filter-all-levels)]]
               (mapv (fn [d] [:option {:value d :key d} d]) difficulty-levels))]]]
      [:p {:class "has-text-grey is-size-7 mb-3"}
-      (count filtered) " chord" (if (not= (count filtered) 1) "s" "") " found"]
+      (str (count filtered) " " (tr :chords-found))]
      (into [:div {:class "columns is-multiline is-mobile"}]
            (mapv (fn [k] (chord-card k (get chords-db k) state)) filtered))
      (when (zero? (count filtered))
        [:div {:class "has-text-centered has-text-grey py-6"}
         [:p {:class "is-size-4"} "🦙"]
-        [:p "No charango chords match. Try adjusting your search."]])]))
+        [:p (tr :no-chords)]])]))
 
 (defn progressions-view [state]
   (let [transpose-amt (get state :transpose)
@@ -720,7 +1034,7 @@
      ;; Transpose control
      [:div {:class "field is-horizontal is-align-items-center mb-4"}
       [:div {:class "field-label is-normal"}
-       [:label {:class "label"} "Transpose:"]]
+       [:label {:class "label"} (tr :transpose)]]
       [:div {:class "field-body"}
        [:div {:class "field has-addons"}
         [:p {:class "control"}
@@ -737,7 +1051,7 @@
         [:p {:class "control ml-2"}
          [:button {:class "button is-small"
                    :onclick (fn [_] (swap! app-state assoc :transpose 0))}
-          "Reset"]]]]]
+          (tr :reset)]]]]]
      ;; Progressions grouped by genre
      (into [:div]
            (mapv (fn [genre]
@@ -765,11 +1079,11 @@
     (if (empty? favs)
       [:div {:class "has-text-centered has-text-grey py-6"}
        [:p {:class "is-size-3"} "⭐"]
-       [:p {:class "is-size-5"} "No favorites yet"]
-       [:p "Click the star on any chord to add it here."]]
+       [:p {:class "is-size-5"} (tr :no-favorites)]
+       [:p (tr :no-favorites-hint)]]
       [:div
        [:p {:class "has-text-grey is-size-7 mb-3"}
-        (count favs) " favorite chord" (if (not= (count favs) 1) "s" "")]
+        (str (count favs) " " (tr :favorites-count))]
        (into [:div {:class "columns is-multiline is-mobile"}]
              (mapv (fn [k]
                      (when-let [cd (get chords-db k)]
@@ -784,7 +1098,8 @@
       [:a {:class "navbar-item"
            :onclick (fn [_] (swap! app-state assoc :active-tab "chords"))}
        [:span {:class "is-size-4 mr-2"} "🦙"]
-       [:span {:class "has-text-weight-bold is-size-5"} "Charango Chords Pro"]]
+       [:span {:class "has-text-weight-bold is-size-5"} (tr :app-title)]
+       [:span {:class "is-size-7 has-text-grey ml-2"} (tr :app-subtitle)]]
       [:a {:class "navbar-burger" :role "button" :aria-label "menu" :aria-expanded "false"
            :onclick (fn [e]
                       (let [target (.querySelector js/document ".navbar-menu")
@@ -797,35 +1112,49 @@
       [:div {:class "navbar-start"}
        [:a {:class (str "navbar-item " (if (= active "chords") "is-active" ""))
             :onclick (fn [_] (swap! app-state assoc :active-tab "chords"))}
-        "Chords"]
+        (tr :tab-chords)]
        [:a {:class (str "navbar-item " (if (= active "progressions") "is-active" ""))
             :onclick (fn [_] (swap! app-state assoc :active-tab "progressions"))}
-        "Progressions"]
+        (tr :tab-progressions)]
        [:a {:class (str "navbar-item " (if (= active "favorites") "is-active" ""))
             :onclick (fn [_] (swap! app-state assoc :active-tab "favorites"))}
-        (str "Favorites (" (count (get state :favorites)) ")")]]
+        (str (tr :favorites-count) " (" (count (get state :favorites)) ")")]
+       [:a {:class (str "navbar-item " (if (= active "tuner") "is-active" ""))
+            :onclick (fn [_] (swap! app-state assoc :active-tab "tuner"))}
+        (tr :tab-tuner)]]
       [:div {:class "navbar-end"}
-       ;; Octave mode toggle
-       [:div {:class "navbar-item"}
-        [:button {:class (str "button is-small " (if (get state :octave-mode) "is-success" "is-light"))
-                  :title (if (get state :octave-mode) "Octave separation ON — authentic charango sound" "Unison mode — both strings same pitch")
-                  :onclick (fn [_] (swap! app-state update :octave-mode not))}
-         (if (get state :octave-mode) "🎵 Octave" "🎵 Unison")]]
-       ;; Volume slider
-       [:div {:class "navbar-item"}
-        [:input {:class "slider" :type "range" :min "0" :max "1" :step "0.05"
-                 :value (get state :volume) :style "width:80px;"
-                 :oninput (fn [e]
-                            (let [v (js/parseFloat (.. e -target -value))]
-                              (swap! app-state assoc :volume v)
-                              (reset! volume v)))}]
-        [:span {:class "tag is-info ml-2 is-size-7"}
-         (str "🔊 " (int (* (get state :volume) 100)) "%")]]
-       ;; Theme toggle
-       [:div {:class "navbar-item"}
-        [:button {:class (str "button is-small " (if dark "is-warning" "is-dark"))
-                  :onclick (fn [_] (swap! app-state update :dark-theme not))}
-         (if dark "☀ Light" "🌙 Dark")]]]]]))
+       ;; Settings dropdown
+       [:div {:class "navbar-item has-dropdown is-hoverable"}
+        [:a {:class "navbar-link"} "⚙️"]
+        [:div {:class "navbar-dropdown is-right"}
+         ;; Octave mode
+         [:div {:class "navbar-item"}
+          [:button {:class (str "button is-small " (if (get state :octave-mode) "is-success" "is-light"))
+                    :onclick (fn [_] (swap! app-state update :octave-mode not))}
+           (str "🎵 " (if (get state :octave-mode) (tr :octave) (tr :unison)))]]
+         [:hr {:class "navbar-divider"}]
+         ;; Volume
+         [:div {:class "navbar-item"}
+          [:div {:style "display:flex;align-items:center;gap:6px;"}
+           [:span {:class "is-size-7"} "🔊"]
+           [:input {:class "slider" :type "range" :min "0" :max "1" :step "0.05"
+                    :value (get state :volume) :style "width:70px;"
+                    :oninput (fn [e]
+                               (let [v (js/parseFloat (.. e -target -value))]
+                                 (swap! app-state assoc :volume v)
+                                 (reset! volume v)))}]
+           [:span {:class "tag is-info is-size-7"} (int (* (get state :volume) 100)) "%"]]]
+         [:hr {:class "navbar-divider"}]
+         ;; Language
+         [:div {:class "navbar-item"}
+          [:button {:class "button is-small is-light"
+                    :onclick (fn [_] (swap! app-state update :lang #(if (= % :en) :es :en)))}
+           (if (= (get state :lang) :en) "🇪🇸 ES" "🇬🇧 EN")]]
+         ;; Theme
+         [:div {:class "navbar-item"}
+          [:button {:class (str "button is-small " (if dark "is-warning" "is-dark"))
+                    :onclick (fn [_] (swap! app-state update :dark-theme not))}
+           (if dark (str "☀ " (tr :light)) (str "🌙 " (tr :dark)))]]]]]]]))
 
 (defn app-ui [state]
   (let [active (get state :active-tab)
@@ -837,12 +1166,13 @@
         "chords" (chords-view state)
         "progressions" (progressions-view state)
         "favorites" (favorites-view state)
+        "tuner" (tuner-view state)
         (chords-view state))]
      (chord-modal)
      [:footer {:class "footer py-3 has-text-centered"}
       [:p {:class "is-size-7 has-text-grey"}
        "Charango Chords Pro · " (count (keys chords-db)) " chords · "
-       (count progressions) " progressions · Built with Squint + Reagami + Bulma"]]
+       (count progressions) " " (tr :footer-progressions) " · " (tr :footer-built)]]
      [:style "
        .chord-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
        .progression-card { transition: box-shadow 0.2s; }
@@ -860,17 +1190,23 @@
   (fn []
     (.render rg (js/document.getElementById "app") (app-ui @app-state)))
   250)
-
 </script>
+
 <script type="module">
 import { compileString } from 'https://unpkg.com/squint-cljs/index.js';
+import * as reagami from 'https://unpkg.com/reagami@0.1.37/reagami.mjs';
+window.reagami = reagami;
+
 const source = document.getElementById('squint-src').textContent;
+
 try {
   const js = compileString(source, { core_module: 'squint-cljs/core.js' });
   const blob = new Blob([js], { type: 'application/javascript' });
-  await import(URL.createObjectURL(blob));
+  const url = URL.createObjectURL(blob);
+  await import(url);
 } catch (err) {
-  document.getElementById('app').innerHTML = '<div style="padding:2rem;color:red"><h2>Compilation Error</h2><pre>'+err.message+'</pre></div>';
+  console.error('Squint compilation failed:', err);
+  document.getElementById('app').innerHTML = '<div class="notification is-danger">Compilation error: ' + err.message + '</div>';
 }
 </script>
 </body>
