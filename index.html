@@ -1095,10 +1095,10 @@
         dark (get state :dark-theme)]
     [:nav {:class (str "navbar " (if dark "is-dark" "is-light")) :role "navigation"}
      [:div {:class "navbar-brand"}
-      [:a {:class "navbar-item" :style "padding:0.25rem 0.75rem;"
+      [:a {:class "navbar-item"
            :onclick (fn [_] (swap! app-state assoc :active-tab "chords"))}
-       [:img {:src "charanguito.jpg" :alt "Charanguito"
-              :style "height:84px;width:auto;border-radius:6px;"}]]
+       [:span {:class "has-text-weight-bold is-size-5"} (tr :app-title)]
+       [:span {:class "is-size-7 has-text-grey ml-2"} (tr :app-subtitle)]]
       [:a {:class "navbar-burger" :role "button" :aria-label "menu" :aria-expanded "false"
            :onclick (fn [e]
                       (let [target (.querySelector js/document ".navbar-menu")
@@ -1159,6 +1159,10 @@
   (let [active (get state :active-tab)
         dark (get state :dark-theme)]
     [:div {:class (if dark "has-background-dark has-text-light" "")}
+     ;; Logo banner
+     [:div {:class "has-text-centered py-3" :style "background: linear-gradient(135deg, #f5e6d3 0%, #e8d5b7 50%, #f0e6d8 100%);"}
+      [:img {:src "charanguito.jpg" :alt "Charanguito"
+             :style "max-width:min(500px, 90vw);height:auto;"}]]
      (navbar state)
      [:section {:class "section py-3"}
       (case active
